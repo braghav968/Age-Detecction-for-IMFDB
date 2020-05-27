@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" id="Definitions_0mhu2zj" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.7.3">
-  <bpmn:process id="customerOnboarding" name="Customer Onboarding" isExecutable="true">
+  <bpmn:process id="customerOnboardingOptimize" name="Customer Onboarding Optimize" isExecutable="true">
     <bpmn:startEvent id="applicationReceived" name="Application Received">
       <bpmn:extensionElements>
         <camunda:properties>
@@ -152,7 +152,11 @@
   <bpmn:message id="Message_0n7d7zh" name="DocumentNeeded" />
   <bpmn:message id="Message_0sxxtus" name="documentReceived" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="customerOnboarding">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="customerOnboardingOptimize">
+      <bpmndi:BPMNEdge id="Flow_0lu71l3_di" bpmnElement="Flow_0lu71l3">
+        <di:waypoint x="800" y="140" />
+        <di:waypoint x="902" y="140" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0249zb3_di" bpmnElement="Flow_0249zb3">
         <di:waypoint x="300" y="180" />
         <di:waypoint x="300" y="480" />
@@ -206,7 +210,7 @@
         <di:waypoint x="1656" y="140" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_08m87u4_di" bpmnElement="Flow_08m87u4">
-        <di:waypoint x="998" y="140" />
+        <di:waypoint x="938" y="140" />
         <di:waypoint x="1040" y="140" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1hqq6zq_di" bpmnElement="Flow_1hqq6zq" bioc:stroke="#000" bioc:fill="#fff">
@@ -228,10 +232,6 @@
         <di:waypoint x="205" y="140" />
         <di:waypoint x="250" y="140" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0lu71l3_di" bpmnElement="Flow_0lu71l3">
-        <di:waypoint x="800" y="140" />
-        <di:waypoint x="962" y="140" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Event_15c3rpr_di" bpmnElement="applicationReceived" bioc:stroke="#000" bioc:fill="#fff">
         <dc:Bounds x="169" y="122" width="36" height="36" />
         <bpmndi:BPMNLabel>
@@ -245,9 +245,9 @@
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0ueujvl_di" bpmnElement="waitTillAppointmentDate" bioc:stroke="#000" bioc:fill="#fff">
-        <dc:Bounds x="962" y="122" width="36" height="36" />
+        <dc:Bounds x="902" y="122" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="949" y="165" width="62" height="27" />
+          <dc:Bounds x="889" y="165" width="62" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_16i9nxl_di" bpmnElement="discussAboutContract">
