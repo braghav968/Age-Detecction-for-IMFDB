@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" id="Definitions_0mhu2zj" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.7.3">
+  <bpmn:process id="customerOnboarding" name="Customer Onboarding" isExecutable="true">
+    <bpmn:startEvent id="applicationReceived" name="Application Received">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="simNextFire" value="${g.timesPerDay(&#34;onboard&#34;,&#34;07:30&#34;,&#34;22:30&#34;, g.uniformLong(1,250))}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_08d9mjm</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="applicationDecisionGateway" name="Application Decision?">
+      <bpmn:incoming>SequenceFlow_0r9aqz0</bpmn:incoming>
+      <bpmn:outgoing>Flow_0haosec</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1hqq6zq</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:eventBasedGateway id="eventBasedGateway">
+      <bpmn:incoming>Flow_15g56pj</bpmn:incoming>
+      <bpmn:outgoing>Flow_124ipog</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0c725l8</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="receivedApplicationCancellation" name="Received Application Cancellation ">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="simNextFire" value="${g.nowPlusMinutes(g.uniformInt(4,5))}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_124ipog</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_07kdf0u</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0ft2ubx" messageRef="Message_0c9pd46" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="waitTillAppointmentDate" name="Wait till Appointment">
+      <bpmn:incoming>Flow_0c725l8</bpmn:incoming>
+      <bpmn:outgoing>Flow_08m87u4</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1k86g6d">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT1M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="discussAboutContract" name="Discuss about Contract">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="simNextFire" value="${g.nowPlusMinutes(g.uniformInt(1,2))}" />
+          <camunda:property name="simGeneratePayload" value="approved=${g.uniformFromArgs2(&#34;yes&#34;, &#34;no&#34;)}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_08m87u4</bpmn:incoming>
+      <bpmn:outgoing>Flow_11mib6k</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="backgroundCheckOfApplication" name="Background Check of Application">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="simGeneratePayload" value="backgroundCheckApplication=${g.uniformFromArgs2(&#34;yes&#34;, &#34;no&#34;)}" />
+          <camunda:property name="simNextFire" value="${g.nowPlusMinutes(g.uniformInt(3,5))}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1bxg4jy</bpmn:incoming>
+      <bpmn:incoming>Flow_1ffrp1r</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0r9aqz0</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="applicationIssued" name="Application Issued">
+      <bpmn:incoming>Flow_0ymdwvk</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="applicationRejected" name="Application Rejected">
+      <bpmn:incoming>Flow_1orcbxf</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="reviewAndSignContract" name="Review &#38; Sign Contract Doc">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="simNextFire" value="${g.nowPlusMinutes(g.uniformInt(2, 5))}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_177kyph</bpmn:incoming>
+      <bpmn:outgoing>Flow_1gegxog</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_08d9mjm" sourceRef="applicationReceived" targetRef="checkApplication" />
+    <bpmn:sequenceFlow id="Flow_0haosec" name="No (Red)" sourceRef="applicationDecisionGateway" targetRef="sendApplicationRejectionLetter">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${backgroundCheckApplication == 'no'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1hqq6zq" name="Yes (Green)" sourceRef="applicationDecisionGateway" targetRef="scheduleAppointment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${backgroundCheckApplication == 'yes'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_15g56pj" sourceRef="scheduleAppointment" targetRef="eventBasedGateway" />
+    <bpmn:sequenceFlow id="Flow_124ipog" sourceRef="eventBasedGateway" targetRef="receivedApplicationCancellation" />
+    <bpmn:sequenceFlow id="Flow_0c725l8" sourceRef="eventBasedGateway" targetRef="waitTillAppointmentDate" />
+    <bpmn:sequenceFlow id="Flow_08m87u4" sourceRef="waitTillAppointmentDate" targetRef="discussAboutContract" />
+    <bpmn:sequenceFlow id="Flow_0ymdwvk" sourceRef="provideAccessToServices" targetRef="applicationIssued" />
+    <bpmn:sequenceFlow id="Flow_1orcbxf" sourceRef="sendApplicationRejectionLetter" targetRef="applicationRejected" />
+    <bpmn:sequenceFlow id="Flow_1gegxog" sourceRef="reviewAndSignContract" targetRef="provideAccessToServices" />
+    <bpmn:sequenceFlow id="Flow_1bxg4jy" sourceRef="checkApplication" targetRef="backgroundCheckOfApplication">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="simGeneratePayload" value="riskEval = ${g.uniformBoolean()}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">#{riskEval}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="agreeContractGateway" name="Agree on contract?">
+      <bpmn:incoming>Flow_11mib6k</bpmn:incoming>
+      <bpmn:outgoing>Flow_177kyph</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_0xcrwls</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_11mib6k" sourceRef="discussAboutContract" targetRef="agreeContractGateway" />
+    <bpmn:sequenceFlow id="Flow_177kyph" name="Agree" sourceRef="agreeContractGateway" targetRef="reviewAndSignContract">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved=='yes'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:serviceTask id="checkApplication" name="Check Application (Risk Evaluation)" camunda:class="com.mastercard.bpo.CheckApplicationDelegate">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="simCallRealImplementation" value="true" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_08d9mjm</bpmn:incoming>
+      <bpmn:outgoing>Flow_1bxg4jy</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0249zb3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0r9aqz0" sourceRef="backgroundCheckOfApplication" targetRef="applicationDecisionGateway" />
+    <bpmn:sequenceFlow id="SequenceFlow_0xcrwls" name="Not Agree" sourceRef="agreeContractGateway" targetRef="sendApplicationRejectionLetter">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved=='no'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_07kdf0u" sourceRef="receivedApplicationCancellation" targetRef="sendApplicationRejectionLetter" />
+    <bpmn:serviceTask id="provideAccessToServices" name="Provides access to services and resources">
+      <bpmn:incoming>Flow_1gegxog</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ymdwvk</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_14qex3h" sourceRef="documentNeeded" targetRef="requestDocument" />
+    <bpmn:userTask id="requestDocument" name="Request Document">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="simNextFire" value="${g.nowPlusMinutes(g.uniformInt(2,5))}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_14qex3h</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ffrp1r</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1ffrp1r" sourceRef="requestDocument" targetRef="backgroundCheckOfApplication" />
+    <bpmn:sendTask id="sendApplicationRejectionLetter" name="Send Application Rejection Letter">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="simNextFire" value="${g.now()}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_07kdf0u</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_0xcrwls</bpmn:incoming>
+      <bpmn:incoming>Flow_0haosec</bpmn:incoming>
+      <bpmn:incoming>Flow_0249zb3</bpmn:incoming>
+      <bpmn:outgoing>Flow_1orcbxf</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="Flow_0249zb3" sourceRef="checkApplication" targetRef="sendApplicationRejectionLetter">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">#{not riskEval}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:boundaryEvent id="documentNeeded" name="Document Needed" cancelActivity="false" attachedToRef="backgroundCheckOfApplication">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="simNextFire" value="${g.nowPlusMinutes(g.uniformInt(3,5))}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_14qex3h</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_10lpnoc" messageRef="Message_0n7d7zh" />
+    </bpmn:boundaryEvent>
+    <bpmn:userTask id="scheduleAppointment" name="Schedule Appointement">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="simNextFire" value="${g.nowPlusMinutes(g.uniformInt(1,5))}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1hqq6zq</bpmn:incoming>
+      <bpmn:outgoing>Flow_15g56pj</bpmn:outgoing>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmn:message id="Message_0c9pd46" name="ApplicationCancellationReceived" />
+  <bpmn:message id="Message_0n7d7zh" name="DocumentNeeded" />
+  <bpmn:message id="Message_0sxxtus" name="documentReceived" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="customerOnboarding">
+      <bpmndi:BPMNEdge id="Flow_0249zb3_di" bpmnElement="Flow_0249zb3">
+        <di:waypoint x="300" y="180" />
+        <di:waypoint x="300" y="480" />
+        <di:waypoint x="1160" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ffrp1r_di" bpmnElement="Flow_1ffrp1r">
+        <di:waypoint x="418" y="264" />
+        <di:waypoint x="418" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14qex3h_di" bpmnElement="Flow_14qex3h">
+        <di:waypoint x="501" y="198" />
+        <di:waypoint x="501" y="304" />
+        <di:waypoint x="468" y="304" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_07kdf0u_di" bpmnElement="SequenceFlow_07kdf0u">
+        <di:waypoint x="998" y="312" />
+        <di:waypoint x="1190" y="312" />
+        <di:waypoint x="1190" y="416" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0xcrwls_di" bpmnElement="SequenceFlow_0xcrwls" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="1210" y="165" />
+        <di:waypoint x="1210" y="416" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1223" y="260" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0r9aqz0_di" bpmnElement="SequenceFlow_0r9aqz0">
+        <di:waypoint x="501" y="140" />
+        <di:waypoint x="575" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_177kyph_di" bpmnElement="Flow_177kyph" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="1235" y="140" />
+        <di:waypoint x="1346" y="140" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1276" y="122" width="29" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11mib6k_di" bpmnElement="Flow_11mib6k">
+        <di:waypoint x="1140" y="140" />
+        <di:waypoint x="1185" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1bxg4jy_di" bpmnElement="Flow_1bxg4jy">
+        <di:waypoint x="350" y="140" />
+        <di:waypoint x="399" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1gegxog_di" bpmnElement="Flow_1gegxog">
+        <di:waypoint x="1446" y="140" />
+        <di:waypoint x="1499" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1orcbxf_di" bpmnElement="Flow_1orcbxf">
+        <di:waypoint x="1260" y="456" />
+        <di:waypoint x="1344" y="456" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ymdwvk_di" bpmnElement="Flow_0ymdwvk">
+        <di:waypoint x="1599" y="140" />
+        <di:waypoint x="1656" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08m87u4_di" bpmnElement="Flow_08m87u4">
+        <di:waypoint x="998" y="140" />
+        <di:waypoint x="1040" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0c725l8_di" bpmnElement="Flow_0c725l8">
+        <di:waypoint x="915" y="140" />
+        <di:waypoint x="962" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_124ipog_di" bpmnElement="Flow_124ipog">
+        <di:waypoint x="890" y="165" />
+        <di:waypoint x="890" y="312" />
+        <di:waypoint x="962" y="312" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15g56pj_di" bpmnElement="Flow_15g56pj">
+        <di:waypoint x="800" y="140" />
+        <di:waypoint x="865" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hqq6zq_di" bpmnElement="Flow_1hqq6zq" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="625" y="140" />
+        <di:waypoint x="700" y="140" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="622" y="122" width="59" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0haosec_di" bpmnElement="Flow_0haosec" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="600" y="165" />
+        <di:waypoint x="600" y="456" />
+        <di:waypoint x="1160" y="456" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="547" y="312" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08d9mjm_di" bpmnElement="Flow_08d9mjm">
+        <di:waypoint x="205" y="140" />
+        <di:waypoint x="250" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_15c3rpr_di" bpmnElement="applicationReceived" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="169" y="122" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="160" y="165" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1dflrg9_di" bpmnElement="applicationDecisionGateway" isMarkerVisible="true" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="575" y="115" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="541" y="98" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0n9h0c7_di" bpmnElement="eventBasedGateway">
+        <dc:Bounds x="865" y="115" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0gyg5bs_di" bpmnElement="receivedApplicationCancellation" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="962" y="294" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="950" y="337" width="61" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ueujvl_di" bpmnElement="waitTillAppointmentDate" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="962" y="122" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="949" y="165" width="62" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_16i9nxl_di" bpmnElement="discussAboutContract">
+        <dc:Bounds x="1040" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_19xk3s1_di" bpmnElement="backgroundCheckOfApplication">
+        <dc:Bounds x="401" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0a6hxu2_di" bpmnElement="applicationIssued" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="1656" y="122" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1630" y="165" width="89" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1mvjdjv_di" bpmnElement="applicationRejected" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="1344" y="438" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1335" y="481" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1rpkjbx_di" bpmnElement="reviewAndSignContract">
+        <dc:Bounds x="1346" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1bctso6_di" bpmnElement="agreeContractGateway" isMarkerVisible="true" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="1185" y="115" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1187" y="84" width="46" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0hwx81t_di" bpmnElement="checkApplication">
+        <dc:Bounds x="250" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_1lyf6lu_di" bpmnElement="provideAccessToServices">
+        <dc:Bounds x="1499" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0j0v00t_di" bpmnElement="requestDocument">
+        <dc:Bounds x="368" y="264" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1cvuww8_di" bpmnElement="sendApplicationRejectionLetter">
+        <dc:Bounds x="1160" y="416" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1a2hhgd_di" bpmnElement="scheduleAppointment">
+        <dc:Bounds x="700" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1sazmax_di" bpmnElement="documentNeeded" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="483" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="507" y="230" width="52" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
